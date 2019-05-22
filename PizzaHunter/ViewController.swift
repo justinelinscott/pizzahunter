@@ -8,6 +8,7 @@
 
 import UIKit
 import MapKit
+import CoreLocation
 
 
 class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
@@ -25,7 +26,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         locationManager.requestWhenInUseAuthorization()
         mapView.showsUserLocation = true
         locationManager.startUpdatingLocation()
-        }
+    }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         currentLocation = locations.first
@@ -85,53 +86,44 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         print("info button tapped")
         
         let annotation = view.annotation
+        let lat = annotation!.coordinate.latitude
+        let long = annotation!.coordinate.longitude
+        //gets the address
+        getAddress(location: CLLocation(latitude: lat, longitude: long), title: annotation!.title!!)
+
         
-        let alertController = UIAlertController(title: annotation?.title!, message: annotation?.description, preferredStyle: .alert)
+    }
+    
+    //gets address as a string
+    func getAddress(location: CLLocation, title: String) {
+        
+        var addressString = ""
+        
+        let geocoder = CLGeocoder()
+        //More like GeoDecode
+        geocoder.reverseGeocodeLocation(location) { (placemarks: [CLPlacemark]?, error: Error?) in
+            let placemark = placemarks?.first
+            if let subthoroughfare = placemark?.subThoroughfare {
+                let address = "\(subthoroughfare) \(placemark!.thoroughfare!) \n \(placemark!.locality!), \(placemark!.administrativeArea!)"
+                addressString = address
+                //calls the view controller once we are 100% SURE that the string exists and isnt nil
+                self.showAlertController(title: title, address: addressString)
+                print(addressString)
+            } else {
+                print ("no subthoroughfare")
+                addressString = ""
+            }
+        }
+    }
+    
+    //makes the alert controller to display the name of the place and the address. Title has to be explicitly called as a parameter beacuse annotation won't exist in the scope of the get address fuction we will call it in.
+    func showAlertController(title: String!, address: String!) {
+        let alertController = UIAlertController(title: title, message: address, preferredStyle: .alert)
         let alertAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
         alertController.addAction(alertAction)
         self.present(alertController, animated: true)
         
-        
     }
-    func getAdressName(coords: CLLocation) -> String {
-        
-        var addressStringFinal : String!
-        
-        CLGeocoder().reverseGeocodeLocation(coords) { (placemark, error) in
-            if error != nil {
-                print("Hay un error")
-            } else {
-                
-                let place = placemark! as [CLPlacemark]
-                if place.count > 0 {
-                    let place = placemark![0]
-                    var addressString : String = ""
-                    if place.thoroughfare != nil {
-                        addressString = addressString + place.thoroughfare! + ", "
-                    }
-                    if place.subThoroughfare != nil {
-                        addressString = addressString + place.subThoroughfare! + "\n"
-                    }
-                    if place.locality != nil {
-                        addressString = addressString + place.locality! + " - "
-                    }
-                    if place.postalCode != nil {
-                        addressString = addressString + place.postalCode! + "\n"
-                    }
-                    if place.subAdministrativeArea != nil {
-                        addressString = addressString + place.subAdministrativeArea! + " - "
-                    }
-                    if place.country != nil {
-                        addressString = addressString + place.country!
-                    }
-                    
-                    addressStringFinal = addressString
-                }
-            }
-        }
-        return addressStringFinal
-    }
-    
     
 }
 
