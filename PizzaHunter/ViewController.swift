@@ -67,7 +67,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         var pin = MKAnnotationView(annotation: annotation, reuseIdentifier: nil)
-        pin.image = UIImage(named: "Image")
+        pin.image = UIImage(named: "pizzaIcon")
         //pin = MKPinAnnotationView(annotation: annotation, reuseIdentifier: nil)
         pin.canShowCallout = true
         let button = UIButton(type: .detailDisclosure)
@@ -79,5 +79,19 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             return pin
         }
     }
+    
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        print("info button tapped")
+        
+        let annotation = view.annotation
+        
+        let alertController = UIAlertController(title: annotation?.title!, message: annotation?.description, preferredStyle: .alert)
+        let alertAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+        alertController.addAction(alertAction)
+        self.present(alertController, animated: true)
+        
+        
+    }
+    
 }
 
