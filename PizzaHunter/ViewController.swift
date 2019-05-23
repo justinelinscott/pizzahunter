@@ -14,13 +14,18 @@ import CoreLocation
 class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var destinationTextView: UITextView!
     
     var locationManager = CLLocationManager()
     var currentLocation : CLLocation!
     var pizzaPlaces : [MKMapItem] = []
+    var directionString = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        destinationTextView.isHidden = true
+        
         locationManager.delegate = self
         mapView.delegate = self
         locationManager.requestWhenInUseAuthorization()
@@ -86,6 +91,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        
+        destinationTextView.isHidden = true
+        
         for overlay in self.mapView.overlays {
             self.mapView.removeOverlay(overlay)
         }
@@ -104,8 +112,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         let long = annotation!.coordinate.longitude
         //gets the address
         getAddress(location: CLLocation(latitude: lat, longitude: long), title: annotation!.title!!)
-
-        
+        for pizzaPlace in pizzaPlaces {
+            if pizzaPlace.placemark.coordinate.longitude == view.annotation?.coordinate.longitude && pizzaPlace.placemark.coordinate.latitude == view.annotation?.coordinate.latitude{
+                getWrittenDirections(location: pizzaPlace)
+            }
+        }
     }
     
     //gets address as a string
@@ -138,7 +149,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             }
         let getDirectionsAction = UIAlertAction(title: "Directions", style: .default) { (UIAlertAction) in
             print ("Directions Triggered")
-            //figure out how to get written direction
+            self.destinationTextView.isHidden = false
+            self.destinationTextView.text = self.directionString
+            self.destinationTextView.sizeToFit()
         }
         alertController.addAction(getDirectionsAction)
         alertController.addAction(alertAction)
@@ -156,16 +169,14 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             let routes = response?.routes
             let route = routes?.first
             var x = 1
-            var directionString = ""
+            self.directionString = ""
             for step in route!.steps{
                 if step.instructions != ""{
-                    directionString.append("\(x): \(step.instructions)\n")
+                    self.directionString.append("\(x): \(step.instructions)\n")
                     x += 1
                 }
             }
-            print (directionString)
         }
-        
     }
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
